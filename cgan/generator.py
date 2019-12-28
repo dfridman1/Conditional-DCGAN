@@ -1,6 +1,9 @@
+import numpy as np
+
 import torch
 import torch.nn as nn
 
+from cgan.helpers import unnormalize
 from cgan.layers import Unflatten
 
 
@@ -60,3 +63,14 @@ class Generator(nn.Module):
 
         out = self.deconvolutions(out)
         return torch.tanh(out)
+
+    def generate(self, z, additional_features=None):
+        reset_train = self.training
+        self.eval()
+        images_tensor = self.forward(z=z, additional_features=additional_features)
+        images_tensor = unnormalize(images_tensor)
+        images = images_tensor.detach().cpu().numpy().transpose(0, 2, 3, 1)
+        images = (255 * images).round().astype(np.uint8)
+        if reset_train:
+            self.train()
+        return images

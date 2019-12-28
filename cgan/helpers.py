@@ -32,6 +32,12 @@ def sample_from_dataset(dataset, n):
     return image_tensors, labels
 
 
+def one_hot_labels_tensor(labels, num_classes):
+    one_hot = np.zeros(shape=(len(labels), num_classes))
+    one_hot[np.arange(len(labels)), labels] = 1
+    return torch.from_numpy(one_hot)
+
+
 def show_images(images, classnames=None):
     assert images.ndim == 4 and images.shape[-1] in (1, 3)
     assert classnames is None or 0 < len(classnames) == len(images)

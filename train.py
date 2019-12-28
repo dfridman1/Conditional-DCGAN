@@ -99,14 +99,17 @@ def train(generator, discriminator, generator_criterion, discriminator_criterion
         )
 
         if it == 1 or it % training_params['show_every'] == 0:
-            images = helpers.unnormalize(fake_images_tensor).cpu().detach().numpy()
-            images = images.transpose(0, 2, 3, 1)  # (N, C, H, W) -> (N, H, W, C)
-            images = (images * 255).round().astype(np.uint8)
-            images = images[:16]
+            samples_per_class, num_classes = 5, len(dataset.classes)
+            num_images = samples_per_class * num_classes
+            z = helpers.generate_z(n=num_images, z_dim=generator.z_dim).to(device=device, dtype=dtype)
             if conditional:
-                classnames = np.random.choice(dataset.classes, size=len(images), replace=True)
+                labels = np.tile(np.arange(num_classes), reps=samples_per_class)
+                classnames = [dataset.classes[index] for index in labels]
+                labels_tensor = helpers.one_hot_labels_tensor(labels, num_classes=num_classes).to(device=device, dtype=dtype)
+                images = generator.generate(z, labels_tensor)
             else:
                 classnames = None
+                images = generator.generate(z)
             fig = helpers.show_images(images, classnames=classnames)
             out_filepath = os.path.join(experiment_dirpath, f'iteration_{it}.png')
             fig.savefig(out_filepath)
