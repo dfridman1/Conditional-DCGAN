@@ -11,7 +11,8 @@ from tqdm import tqdm
 from cgan import helpers
 from cgan.discriminator import Discriminator
 from cgan.generator import Generator
-from cgan.loss import vanilla_discriminator_criterion, vanilla_generator_criterion
+from cgan.loss import vanilla_discriminator_criterion, vanilla_generator_criterion, \
+    l2_discriminator_criterion, l2_generator_criterion
 
 
 DATASET_NAME_TO_DATASET_BUILDER = {
@@ -112,6 +113,7 @@ def train(generator, discriminator, generator_criterion, discriminator_criterion
             fig = helpers.show_images(images, classnames=classnames)
             out_filepath = os.path.join(experiment_dirpath, f'iteration_{it}.png')
             fig.savefig(out_filepath)
+            fig.clf()
 
 
 def parse_args():
@@ -125,6 +127,7 @@ def parse_args():
     parser.add_argument('--z_dim', type=float, default=128)
     parser.add_argument('--k', type=int, default=3)
     parser.add_argument('--conditional', action='store_true')
+    parser.add_argument('--l2_loss', action='store_true')
     return parser.parse_args()
 
 
@@ -142,8 +145,12 @@ def main():
     generator = Generator(z_dim=args.z_dim, image_size=image_size, num_channels=num_channels, num_additional_features=num_additional_features)
     discriminator = Discriminator(image_size=image_size, num_channels=num_channels, num_additional_features=num_additional_features)
 
-    generator_criterion = vanilla_generator_criterion
-    discriminator_criterion = vanilla_discriminator_criterion
+    if args.l2_loss:
+        generator_criterion = l2_generator_criterion
+        discriminator_criterion = l2_discriminator_criterion
+    else:
+        generator_criterion = vanilla_generator_criterion
+        discriminator_criterion = vanilla_discriminator_criterion
 
     training_params = {
         'device': torch.device(f'cuda:{args.gpu_id}'),
