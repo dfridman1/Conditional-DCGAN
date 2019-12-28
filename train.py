@@ -31,6 +31,7 @@ def train(generator, discriminator, generator_criterion, discriminator_criterion
     g_optimizer = optim.Adam(generator.parameters(), lr=training_params.get('lr', 1e-3), betas=(0.5, 0.999))
     d_optimizer = optim.Adam(discriminator.parameters(), lr=training_params.get('lr', 1e-3), betas=(0.5, 0.999))
 
+    conditional = training_params.get('conditional', False)
     k = training_params.get('k', 1)
     batch_size = training_params.get('batch_size', 128)
     train_iters = training_params['train_iters']
@@ -45,12 +46,27 @@ def train(generator, discriminator, generator_criterion, discriminator_criterion
         for _ in range(k):
             real_images_tensor, real_labels = helpers.sample_from_dataset(dataset, n=batch_size // 2)
             real_images_tensor = real_images_tensor.to(device=device, dtype=dtype)
-            real_logits = discriminator(real_images_tensor)
+
+            if conditional:
+                real_labels_tensor = np.zeros(shape=(len(real_images_tensor), len(dataset.classes)))
+                real_labels_tensor[np.arange(len(real_labels_tensor)), real_labels] = 1
+                real_labels_tensor = torch.from_numpy(real_labels_tensor).to(device=device, dtype=dtype)
+                real_logits = discriminator(real_images_tensor, real_labels_tensor)
+            else:
+                real_logits = discriminator(real_images_tensor)
 
             z = helpers.generate_z(n=batch_size // 2, z_dim=generator.z_dim).to(device=device, dtype=dtype)
-            fake_images_tensor = generator(z)
-            fake_labels = np.random.randint(0, len(dataset.classes), size=len(fake_images_tensor))
-            fake_logits = discriminator(fake_images_tensor)
+            fake_labels = np.random.randint(0, len(dataset.classes), size=len(z))
+
+            if conditional:
+                fake_labels_tensor = np.zeros(shape=(len(z), len(dataset.classes)))
+                fake_labels_tensor[np.arange(len(z)), fake_labels] = 1
+                fake_labels_tensor = torch.from_numpy(fake_labels_tensor).to(device=device, dtype=dtype)
+                fake_images_tensor = generator(z, fake_labels_tensor)
+                fake_logits = discriminator(fake_images_tensor, fake_labels_tensor)
+            else:
+                fake_images_tensor = generator(z)
+                fake_logits = discriminator(fake_images_tensor)
 
             d_loss += discriminator_criterion(real_logits=real_logits, fake_logits=fake_logits)
         d_loss /= k
@@ -60,10 +76,18 @@ def train(generator, discriminator, generator_criterion, discriminator_criterion
         # generator
         g_optimizer.zero_grad()
 
-        z = helpers.generate_z(n=batch_size // 2, z_dim=generator.z_dim).to(device=device, dtype=dtype)
-        fake_images_tensor = generator(z)
-        fake_labels = np.random.randint(0, len(dataset.classes), size=len(fake_images_tensor))
-        fake_logits = discriminator(fake_images_tensor)
+        z = helpers.generate_z(n=batch_size, z_dim=generator.z_dim).to(device=device, dtype=dtype)
+        fake_labels = np.random.randint(0, len(dataset.classes), size=len(z))
+
+        if conditional:
+            fake_labels_tensor = np.zeros(shape=(len(z), len(dataset.classes)))
+            fake_labels_tensor[np.arange(len(z)), fake_labels] = 1
+            fake_labels_tensor = torch.from_numpy(fake_labels_tensor).to(device=device, dtype=dtype)
+            fake_images_tensor = generator(z, fake_labels_tensor)
+            fake_logits = discriminator(fake_images_tensor, fake_labels_tensor)
+        else:
+            fake_images_tensor = generator(z)
+            fake_logits = discriminator(fake_images_tensor)
 
         g_loss = generator_criterion(fake_logits=fake_logits)
         g_loss.backward()
@@ -77,6 +101,7 @@ def train(generator, discriminator, generator_criterion, discriminator_criterion
             images = helpers.unnormalize(fake_images_tensor).cpu().detach().numpy()
             images = images.transpose(0, 2, 3, 1)  # (N, C, H, W) -> (N, H, W, C)
             images = (images * 255).round().astype(np.uint8)
+            images = images[:16]
             fig = helpers.show_images(images)
             fig.suptitle(f'Iteration: {it}')
             out_filepath = os.path.join(experiment_dirpath, f'iteration_{it}.png')
@@ -91,6 +116,7 @@ def parse_args():
     parser.add_argument('--dataset_dir', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data'))
     parser.add_argument('--z_dim', type=float, default=128)
     parser.add_argument('--k', type=int, default=3)
+    parser.add_argument('--conditional', action='store_true')
     return parser.parse_args()
 
 
@@ -104,8 +130,9 @@ def main():
     num_channels = dataset[0][0].size(0)
     image_size = dataset[0][0].size(1)
 
-    generator = Generator(z_dim=args.z_dim, image_size=image_size, num_channels=num_channels)
-    discriminator = Discriminator(image_size=image_size, num_channels=num_channels)
+    num_additional_features = len(dataset.classes) if args.conditional else 0
+    generator = Generator(z_dim=args.z_dim, image_size=image_size, num_channels=num_channels, num_additional_features=num_additional_features)
+    discriminator = Discriminator(image_size=image_size, num_channels=num_channels, num_additional_features=num_additional_features)
 
     generator_criterion = vanilla_generator_criterion
     discriminator_criterion = vanilla_discriminator_criterion
@@ -115,7 +142,8 @@ def main():
         'train_iters': 1000,
         'show_every': 100,
         'experiment_dirpath': args.experiment_dirpath,
-        'k': args.k
+        'k': args.k,
+        'conditional': args.conditional
     }
 
     train(generator=generator, discriminator=discriminator, generator_criterion=generator_criterion,
