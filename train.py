@@ -1,6 +1,7 @@
 import os
 import argparse
 import numpy as np
+import matplotlib.pyplot as plt
 
 import torch
 import torch.optim as optim
@@ -102,8 +103,11 @@ def train(generator, discriminator, generator_criterion, discriminator_criterion
             images = images.transpose(0, 2, 3, 1)  # (N, C, H, W) -> (N, H, W, C)
             images = (images * 255).round().astype(np.uint8)
             images = images[:16]
-            fig = helpers.show_images(images)
-            fig.suptitle(f'Iteration: {it}')
+            if conditional:
+                classnames = np.random.choice(dataset.classes, size=len(images), replace=True)
+            else:
+                classnames = None
+            fig = helpers.show_images(images, classnames=classnames)
             out_filepath = os.path.join(experiment_dirpath, f'iteration_{it}.png')
             fig.savefig(out_filepath)
 
