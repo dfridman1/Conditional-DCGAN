@@ -1,7 +1,6 @@
 import os
 import argparse
 import numpy as np
-import matplotlib.pyplot as plt
 
 import torch
 import torch.optim as optim
@@ -49,20 +48,20 @@ def train(generator, discriminator, generator_criterion, discriminator_criterion
             real_images_tensor = real_images_tensor.to(device=device, dtype=dtype)
 
             if conditional:
-                real_labels_tensor = np.zeros(shape=(len(real_images_tensor), len(dataset.classes)))
-                real_labels_tensor[np.arange(len(real_labels_tensor)), real_labels] = 1
-                real_labels_tensor = torch.from_numpy(real_labels_tensor).to(device=device, dtype=dtype)
+                real_labels_tensor = helpers.one_hot_labels_tensor(
+                    real_labels, num_classes=len(dataset.classes)
+                ).to(device=device, dtype=dtype)
                 real_logits = discriminator(real_images_tensor, real_labels_tensor)
             else:
                 real_logits = discriminator(real_images_tensor)
 
             z = helpers.generate_z(n=batch_size // 2, z_dim=generator.z_dim).to(device=device, dtype=dtype)
-            fake_labels = np.random.randint(0, len(dataset.classes), size=len(z))
 
             if conditional:
-                fake_labels_tensor = np.zeros(shape=(len(z), len(dataset.classes)))
-                fake_labels_tensor[np.arange(len(z)), fake_labels] = 1
-                fake_labels_tensor = torch.from_numpy(fake_labels_tensor).to(device=device, dtype=dtype)
+                fake_labels = np.random.randint(0, len(dataset.classes), size=len(z))
+                fake_labels_tensor = helpers.one_hot_labels_tensor(
+                    fake_labels, num_classes=len(dataset.classes)
+                ).to(device=device, dtype=dtype)
                 fake_images_tensor = generator(z, fake_labels_tensor)
                 fake_logits = discriminator(fake_images_tensor, fake_labels_tensor)
             else:
@@ -78,12 +77,12 @@ def train(generator, discriminator, generator_criterion, discriminator_criterion
         g_optimizer.zero_grad()
 
         z = helpers.generate_z(n=batch_size, z_dim=generator.z_dim).to(device=device, dtype=dtype)
-        fake_labels = np.random.randint(0, len(dataset.classes), size=len(z))
 
         if conditional:
-            fake_labels_tensor = np.zeros(shape=(len(z), len(dataset.classes)))
-            fake_labels_tensor[np.arange(len(z)), fake_labels] = 1
-            fake_labels_tensor = torch.from_numpy(fake_labels_tensor).to(device=device, dtype=dtype)
+            fake_labels = np.random.randint(0, len(dataset.classes), size=len(z))
+            fake_labels_tensor = helpers.one_hot_labels_tensor(
+                fake_labels, num_classes=len(dataset.classes)
+            ).to(device=device, dtype=dtype)
             fake_images_tensor = generator(z, fake_labels_tensor)
             fake_logits = discriminator(fake_images_tensor, fake_labels_tensor)
         else:
@@ -121,6 +120,8 @@ def parse_args():
     parser.add_argument('--experiment_dirpath', required=True)
     parser.add_argument('--dataset', choices=DATASET_NAME_TO_DATASET_BUILDER.keys(), required=True)
     parser.add_argument('--dataset_dir', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data'))
+    parser.add_argument('--train_iters', type=int, default=1000)
+    parser.add_argument('--show_every', type=int, default=100)
     parser.add_argument('--z_dim', type=float, default=128)
     parser.add_argument('--k', type=int, default=3)
     parser.add_argument('--conditional', action='store_true')
@@ -146,8 +147,8 @@ def main():
 
     training_params = {
         'device': torch.device(f'cuda:{args.gpu_id}'),
-        'train_iters': 1000,
-        'show_every': 100,
+        'train_iters': args.train_iters,
+        'show_every': args.show_every,
         'experiment_dirpath': args.experiment_dirpath,
         'k': args.k,
         'conditional': args.conditional
