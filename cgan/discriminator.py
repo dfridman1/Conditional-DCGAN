@@ -15,10 +15,11 @@ class Discriminator(nn.Module):
         self._num_additional_features = num_additional_features
 
         convolutions, in_channels, out_channels = [], num_channels, 32
-        for _ in range(num_convolutions):
+        for i in range(num_convolutions):
             convolution = nn.Sequential(
                 nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=3,
                           stride=2, padding=1),
+                nn.BatchNorm2d(out_channels) if i > 0 else nn.Identity(),
                 nn.LeakyReLU(0.01)
             )
             convolutions.append(convolution)
