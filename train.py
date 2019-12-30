@@ -99,7 +99,7 @@ def train(generator, discriminator, generator_criterion, discriminator_criterion
         )
 
         if it == 1 or it % training_params['show_every'] == 0:
-            samples_per_class, num_classes = 5, len(dataset.classes)
+            samples_per_class, num_classes = 10, len(dataset.classes)
             num_images = samples_per_class * num_classes
             z = helpers.generate_z(n=num_images, z_dim=generator.z_dim).to(device=device, dtype=dtype)
             if conditional:
