@@ -69,7 +69,8 @@ def train(generator, discriminator, generator_criterion, discriminator_criterion
                 fake_images_tensor = generator(z)
                 fake_logits = discriminator(fake_images_tensor)
 
-            d_loss += discriminator_criterion(real_logits=real_logits, fake_logits=fake_logits)
+            d_loss += discriminator_criterion(real_logits=real_logits, fake_logits=fake_logits,
+                                              label_smoothing=training_params.get('label_smoothing', False))
         d_loss /= k
         d_loss.backward()
         d_optimizer.step()
@@ -129,6 +130,7 @@ def parse_args():
     parser.add_argument('--k', type=int, default=3)
     parser.add_argument('--conditional', action='store_true')
     parser.add_argument('--l2_loss', action='store_true')
+    parser.add_argument('--label_smoothing', action='store_true')
     parser.add_argument('--experiment_name', required=True)
     return parser.parse_args()
 
@@ -161,7 +163,8 @@ def main():
         'show_every': args.show_every,
         'experiment_dirpath': os.path.join(args.experiment_dirpath, args.experiment_name),
         'k': args.k,
-        'conditional': args.conditional
+        'conditional': args.conditional,
+        'label_smoothing': args.label_smoothing
     }
 
     train(generator=generator, discriminator=discriminator, generator_criterion=generator_criterion,
