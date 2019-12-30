@@ -29,13 +29,22 @@ def train(generator, discriminator, generator_criterion, discriminator_criterion
     device, dtype = training_params['device'], torch.float32
     generator.to(device=device); discriminator.to(device=device)
 
-    g_optimizer = optim.Adam(generator.parameters(), lr=training_params['lr'], betas=(0.5, 0.999))
-    d_optimizer = optim.Adam(discriminator.parameters(), lr=training_params['lr'], betas=(0.5, 0.999))
 
     conditional = training_params.get('conditional', False)
     k = training_params.get('k', 1)
     batch_size = training_params.get('batch_size', 128)
     train_iters = training_params['train_iters']
+    lr = training_params['lr']
+
+    d_optimizer = optim.Adam(discriminator.parameters(), lr=lr, betas=(0.5, 0.999))
+    g_optimizer = optim.Adam(generator.parameters(), lr=lr, betas=(0.5, 0.999))
+
+    if training_params.get('lr_scheduler', False):
+        gamma = helpers.get_exponential_lr_gamma(initial_lr=lr, final_lr=lr * 1e-2, num_iters=train_iters)
+        d_lr_scheduler = optim.lr_scheduler.ExponentialLR(optimizer=d_optimizer, gamma=gamma)
+        g_lr_scheduler = optim.lr_scheduler.ExponentialLR(optimizer=g_optimizer, gamma=gamma)
+    else:
+        d_lr_scheduler = g_lr_scheduler = None
 
     iterator = tqdm(range(1, train_iters + 1), total=train_iters)
     for it in iterator:
@@ -95,6 +104,10 @@ def train(generator, discriminator, generator_criterion, discriminator_criterion
         g_loss.backward()
         g_optimizer.step()
 
+
+        if g_lr_scheduler is not None:
+            g_lr_scheduler.step(); d_lr_scheduler.step()
+
         iterator.set_description(
             f'D:{round(d_loss.cpu().item(), 5)}, G:{round(g_loss.cpu().item(), 5)}'
         )
@@ -126,6 +139,7 @@ def parse_args():
     parser.add_argument('--image_size', type=int)
     parser.add_argument('--train_iters', type=int, default=1000)
     parser.add_argument('--lr', type=float, default=0.0002)
+    parser.add_argument('--lr_scheduler', action='store_true')
     parser.add_argument('--show_every', type=int, default=100)
     parser.add_argument('--z_dim', type=int, default=128)
     parser.add_argument('--k', type=int, default=3)
@@ -166,6 +180,7 @@ def main():
         'device': torch.device(f'cuda:{args.gpu_id}'),
         'train_iters': args.train_iters,
         'lr': args.lr,
+        'lr_scheduler': args.lr_scheduler,
         'show_every': args.show_every,
         'experiment_dirpath': os.path.join(args.experiment_dirpath, args.experiment_name),
         'k': args.k,
