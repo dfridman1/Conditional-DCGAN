@@ -29,8 +29,8 @@ def train(generator, discriminator, generator_criterion, discriminator_criterion
     device, dtype = training_params['device'], torch.float32
     generator.to(device=device); discriminator.to(device=device)
 
-    g_optimizer = optim.Adam(generator.parameters(), lr=training_params.get('lr', 1e-3), betas=(0.5, 0.999))
-    d_optimizer = optim.Adam(discriminator.parameters(), lr=training_params.get('lr', 1e-3), betas=(0.5, 0.999))
+    g_optimizer = optim.Adam(generator.parameters(), lr=training_params['lr'], betas=(0.5, 0.999))
+    d_optimizer = optim.Adam(discriminator.parameters(), lr=training_params['lr'], betas=(0.5, 0.999))
 
     conditional = training_params.get('conditional', False)
     k = training_params.get('k', 1)
@@ -123,6 +123,7 @@ def parse_args():
     parser.add_argument('--dataset', choices=DATASET_NAME_TO_DATASET_BUILDER.keys(), required=True)
     parser.add_argument('--dataset_dir', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data'))
     parser.add_argument('--train_iters', type=int, default=1000)
+    parser.add_argument('--lr', type=float, default=0.0002)
     parser.add_argument('--show_every', type=int, default=100)
     parser.add_argument('--z_dim', type=int, default=128)
     parser.add_argument('--k', type=int, default=3)
@@ -155,6 +156,7 @@ def main():
     training_params = {
         'device': torch.device(f'cuda:{args.gpu_id}'),
         'train_iters': args.train_iters,
+        'lr': args.lr,
         'show_every': args.show_every,
         'experiment_dirpath': args.experiment_dirpath,
         'k': args.k,
