@@ -65,12 +65,8 @@ class Generator(nn.Module):
         return torch.tanh(out)
 
     def generate(self, z, additional_features=None):
-        reset_train = self.training
-        self.eval()
         images_tensor = self.forward(z=z, additional_features=additional_features)
         images_tensor = unnormalize(images_tensor)
         images = images_tensor.detach().cpu().numpy().transpose(0, 2, 3, 1)
         images = (255 * images).round().astype(np.uint8)
-        if reset_train:
-            self.train()
         return images
