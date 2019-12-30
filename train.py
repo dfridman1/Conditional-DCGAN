@@ -123,6 +123,7 @@ def parse_args():
     parser.add_argument('--experiment_dirpath', required=True)
     parser.add_argument('--dataset', choices=DATASET_NAME_TO_DATASET_BUILDER.keys(), required=True)
     parser.add_argument('--dataset_dir', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data'))
+    parser.add_argument('--image_size', type=int)
     parser.add_argument('--train_iters', type=int, default=1000)
     parser.add_argument('--lr', type=float, default=0.0002)
     parser.add_argument('--show_every', type=int, default=100)
@@ -137,10 +138,10 @@ def parse_args():
 
 def main():
     args = parse_args()
-    print(args.dataset_dir)
 
     dataset_builder = DATASET_NAME_TO_DATASET_BUILDER[args.dataset]
-    dataset = dataset_builder(root=args.dataset_dir, train=True, transform=helpers.pil_image_to_image_tensor)
+    image_transform = lambda pil_image: helpers.pil_image_to_image_tensor(pil_image, image_size=args.image_size)
+    dataset = dataset_builder(root=args.dataset_dir, train=True, transform=image_transform)
 
     num_channels = dataset[0][0].size(0)
     image_size = dataset[0][0].size(1)

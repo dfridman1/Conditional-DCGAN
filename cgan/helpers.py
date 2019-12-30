@@ -5,10 +5,12 @@ import matplotlib.gridspec as gridspec
 from collections import defaultdict
 
 import torch
-from torchvision.transforms import ToTensor
+from torchvision.transforms import Resize, ToTensor
 
 
-def pil_image_to_image_tensor(pil_image):
+def pil_image_to_image_tensor(pil_image, image_size=None):
+    if image_size is not None:
+        pil_image = Resize((image_size, image_size))(pil_image)
     return normalize(ToTensor()(pil_image))
 
 
