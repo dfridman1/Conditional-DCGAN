@@ -18,9 +18,8 @@ class Discriminator(nn.Module):
         for _ in range(num_convolutions):
             convolution = nn.Sequential(
                 nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=3,
-                          stride=1, padding=1),
-                nn.LeakyReLU(0.01),
-                nn.MaxPool2d(kernel_size=2, stride=2)
+                          stride=2, padding=1),
+                nn.LeakyReLU(0.01)
             )
             convolutions.append(convolution)
             in_channels = out_channels
