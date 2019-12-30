@@ -141,7 +141,12 @@ def main():
 
     dataset_builder = DATASET_NAME_TO_DATASET_BUILDER[args.dataset]
     image_transform = lambda pil_image: helpers.pil_image_to_image_tensor(pil_image, image_size=args.image_size)
-    dataset = dataset_builder(root=args.dataset_dir, train=True, transform=image_transform)
+    # dataset = dataset_builder(root=args.dataset_dir, train=True, transform=image_transform)
+    dataset = helpers.concatenate_datasets([
+        dataset_builder(root=args.dataset_dir, train=is_train, transform=image_transform)
+        for is_train in (False, True)
+    ])
+    print(f'#images = {len(dataset)}')
 
     num_channels = dataset[0][0].size(0)
     image_size = dataset[0][0].size(1)

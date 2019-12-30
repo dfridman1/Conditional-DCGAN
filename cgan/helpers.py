@@ -5,6 +5,7 @@ import matplotlib.gridspec as gridspec
 from collections import defaultdict
 
 import torch
+from torch.utils.data import ConcatDataset
 from torchvision.transforms import Resize, ToTensor
 
 
@@ -38,6 +39,18 @@ def one_hot_labels_tensor(labels, num_classes):
     one_hot = np.zeros(shape=(len(labels), num_classes))
     one_hot[np.arange(len(labels)), labels] = 1
     return torch.from_numpy(one_hot)
+
+
+def concatenate_datasets(datasets):
+    assert len(datasets) > 0
+    classes_lst = []
+    for dataset in datasets:
+        assert hasattr(dataset, 'classes') and isinstance(dataset.classes, list)
+        classes_lst.append(tuple(dataset.classes))
+    assert len(set(classes_lst)) == 1, "dataset must have the same classes"
+    dataset = ConcatDataset(datasets)
+    setattr(dataset, 'classes', datasets[0].classes)
+    return dataset
 
 
 def show_images(images, classnames=None):
