@@ -145,7 +145,7 @@ def parse_args():
     parser.add_argument('--k', type=int, default=3)
     parser.add_argument('--conditional', action='store_true')
     parser.add_argument('--l2_loss', action='store_true')
-    parser.add_argument('--label_smoothing', action='store_true')
+    parser.add_argument('--no_label_smoothing', action='store_true')
     parser.add_argument('--experiment_name', required=True)
     return parser.parse_args()
 
@@ -185,7 +185,7 @@ def main():
         'experiment_dirpath': os.path.join(args.experiment_dirpath, args.experiment_name),
         'k': args.k,
         'conditional': args.conditional,
-        'label_smoothing': args.label_smoothing
+        'label_smoothing': not args.no_label_smoothing
     }
 
     train(generator=generator, discriminator=discriminator, generator_criterion=generator_criterion,
