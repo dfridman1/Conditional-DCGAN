@@ -23,13 +23,13 @@ class Generator(nn.Module):
 
         self.affine_1 = nn.Sequential(
             nn.Linear(z_dim + num_additional_features, 1024),
-            nn.LeakyReLU(0.01),
-            nn.BatchNorm1d(1024)
+            nn.BatchNorm1d(1024),
+            nn.ReLU()
         )
         self.affine_2 = nn.Sequential(
             nn.Linear(1024, encoded_num_channels * encoded_size * encoded_size),
-            nn.LeakyReLU(0.01),
-            nn.BatchNorm1d(encoded_num_channels * encoded_size * encoded_size)
+            nn.BatchNorm1d(encoded_num_channels * encoded_size * encoded_size),
+            nn.ReLU()
         )
         self.unflatten = Unflatten(C=encoded_num_channels, H=encoded_size, W=encoded_size)
 
@@ -39,8 +39,8 @@ class Generator(nn.Module):
             deconvolution = nn.Sequential(
                 nn.ConvTranspose2d(in_channels=in_channels, out_channels=out_channels, kernel_size=4,
                                    stride=2, padding=1),
-                nn.LeakyReLU(0.01),
-                nn.BatchNorm2d(out_channels)
+                nn.BatchNorm2d(out_channels),
+                nn.ReLU()
             )
             deconvolutions.append(deconvolution)
             in_channels = out_channels
