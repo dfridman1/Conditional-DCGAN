@@ -124,7 +124,7 @@ def parse_args():
     parser.add_argument('--dataset_dir', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data'))
     parser.add_argument('--train_iters', type=int, default=1000)
     parser.add_argument('--show_every', type=int, default=100)
-    parser.add_argument('--z_dim', type=float, default=128)
+    parser.add_argument('--z_dim', type=int, default=128)
     parser.add_argument('--k', type=int, default=3)
     parser.add_argument('--conditional', action='store_true')
     parser.add_argument('--l2_loss', action='store_true')
