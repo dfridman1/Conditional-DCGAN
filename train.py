@@ -104,7 +104,6 @@ def train(generator, discriminator, generator_criterion, discriminator_criterion
         g_loss.backward()
         g_optimizer.step()
 
-
         if g_lr_scheduler is not None:
             g_lr_scheduler.step(); d_lr_scheduler.step()
 

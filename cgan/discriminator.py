@@ -7,7 +7,7 @@ class Discriminator(nn.Module):
         super().__init__()
 
         num_convolutions, encoded_size = 0, image_size
-        while num_convolutions < 3 and encoded_size % 2 == 0:
+        while encoded_size % 2 == 0 and encoded_size > 4:
             encoded_size //= 2
             num_convolutions += 1
         assert num_convolutions >= 2

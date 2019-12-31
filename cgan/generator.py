@@ -12,7 +12,7 @@ class Generator(nn.Module):
         super().__init__()
 
         num_deconvolutions, encoded_size, encoded_num_channels = 0, image_size, 16
-        while num_deconvolutions < 3 and encoded_size % 2 == 0:
+        while encoded_size > 4 and encoded_size % 2 == 0:
             encoded_size //= 2
             num_deconvolutions += 1
             encoded_num_channels *= 2
