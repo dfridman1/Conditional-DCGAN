@@ -92,9 +92,9 @@ def show_images(images, classnames=None):
             ax.imshow(image, cmap=cmap)
             ax.axis('off')
             if show_title and j == 0:
-                ax.set_title(classname, fontsize=7)
+                ax.set_title(classname, fontsize=10)
     for i, ax in enumerate(axes):
         if i not in used_axes:
             ax.remove()
-    fig.tight_layout()
+    fig.subplots_adjust(wspace=0, hspace=0)
     return fig
