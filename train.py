@@ -125,7 +125,8 @@ def train(generator, discriminator, generator_criterion, discriminator_criterion
                 classnames = None
                 images = generator.generate(z)
             fig = helpers.show_images(images, classnames=classnames)
-            out_filepath = os.path.join(experiment_dirpath, f'iteration_{it}.png')
+            iteration_str = str(it).zfill(len(str(train_iters)))
+            out_filepath = os.path.join(experiment_dirpath, f'iteration_{iteration_str}.png')
             fig.savefig(out_filepath)
             fig.clf()
 
