@@ -1,6 +1,7 @@
 import os
 import argparse
 import numpy as np
+import warnings
 
 import torch
 import torch.optim as optim
@@ -131,17 +132,17 @@ def train(generator, discriminator, generator_criterion, discriminator_criterion
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--gpu_id', type=int, required=True)
+    parser.add_argument('--gpu_id', type=int)
     parser.add_argument('--experiment_dirpath', required=True)
     parser.add_argument('--dataset', choices=DATASET_NAME_TO_DATASET_BUILDER.keys(), required=True)
-    parser.add_argument('--dataset_dir', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data'))
+    parser.add_argument('--dataset_dir', required=True)
     parser.add_argument('--image_size', type=int)
-    parser.add_argument('--train_iters', type=int, default=1000)
+    parser.add_argument('--train_iters', type=int, default=50000)
     parser.add_argument('--lr', type=float, default=0.0002)
     parser.add_argument('--lr_scheduler', action='store_true')
-    parser.add_argument('--show_every', type=int, default=100)
-    parser.add_argument('--z_dim', type=int, default=128)
-    parser.add_argument('--k', type=int, default=3)
+    parser.add_argument('--show_every', type=int, default=1000)
+    parser.add_argument('--z_dim', type=int, default=100)
+    parser.add_argument('--k', type=int, default=1)
     parser.add_argument('--conditional', action='store_true')
     parser.add_argument('--l2_loss', action='store_true')
     parser.add_argument('--no_label_smoothing', action='store_true')
@@ -154,9 +155,8 @@ def main():
 
     dataset_builder = DATASET_NAME_TO_DATASET_BUILDER[args.dataset]
     image_transform = lambda pil_image: helpers.pil_image_to_image_tensor(pil_image, image_size=args.image_size)
-    # dataset = dataset_builder(root=args.dataset_dir, train=True, transform=image_transform)
     dataset = helpers.concatenate_datasets([
-        dataset_builder(root=args.dataset_dir, train=is_train, transform=image_transform)
+        dataset_builder(root=args.dataset_dir, train=is_train, transform=image_transform, download=True)
         for is_train in (False, True)
     ])
     print(f'#images = {len(dataset)}')
@@ -175,8 +175,17 @@ def main():
         generator_criterion = vanilla_generator_criterion
         discriminator_criterion = vanilla_discriminator_criterion
 
+    if torch.cuda.is_available():
+        if args.gpu_id is not None:
+            device = f'cuda:{args.gpu_id}'
+        else:
+            warnings.warn("--gpu_id not specified: running on CPU")
+            device = 'cpu'
+    else:
+        device = 'cpu'
+
     training_params = {
-        'device': torch.device(f'cuda:{args.gpu_id}'),
+        'device': device,
         'train_iters': args.train_iters,
         'lr': args.lr,
         'lr_scheduler': args.lr_scheduler,
