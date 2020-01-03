@@ -6,6 +6,7 @@ This repository contains a Pytorch implementation of Conditional DCGAN tested on
 
 ![MNIST](static/mnist.gif) ![CIFAR-10](static/cifar10.gif)
 
+
 **Note** that the model architecture is not precisely the same as in the original DCGAN paper
 [Unsupervised Representation Learning with Deep Convolutional Generative Adversarial Networks](https://arxiv.org/abs/1511.06434).
 
