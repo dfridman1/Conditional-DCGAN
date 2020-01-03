@@ -144,7 +144,7 @@ def parse_args():
     parser.add_argument('--show_every', type=int, default=1000)
     parser.add_argument('--z_dim', type=int, default=100)
     parser.add_argument('--k', type=int, default=1)
-    parser.add_argument('--conditional', action='store_true')
+    parser.add_argument('--no_conditional', action='store_true')
     parser.add_argument('--l2_loss', action='store_true')
     parser.add_argument('--no_label_smoothing', action='store_true')
     parser.add_argument('--experiment_name', required=True)
@@ -165,7 +165,7 @@ def main():
     num_channels = dataset[0][0].size(0)
     image_size = dataset[0][0].size(1)
 
-    num_additional_features = len(dataset.classes) if args.conditional else 0
+    num_additional_features = 0 if args.no_conditional else len(dataset.classes)
     generator = Generator(z_dim=args.z_dim, image_size=image_size, num_channels=num_channels, num_additional_features=num_additional_features)
     discriminator = Discriminator(image_size=image_size, num_channels=num_channels, num_additional_features=num_additional_features)
 
@@ -193,7 +193,7 @@ def main():
         'show_every': args.show_every,
         'experiment_dirpath': os.path.join(args.experiment_dirpath, args.experiment_name),
         'k': args.k,
-        'conditional': args.conditional,
+        'conditional': not args.no_conditional,
         'label_smoothing': not args.no_label_smoothing
     }
 

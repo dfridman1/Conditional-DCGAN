@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 
 def vanilla_generator_criterion(fake_logits):
@@ -16,14 +15,14 @@ def vanilla_discriminator_criterion(real_logits, fake_logits, label_smoothing=Fa
 
 
 def l2_generator_criterion(fake_logits):
-    fake_probabilities = F.sigmoid(fake_logits)
+    fake_probabilities = torch.sigmoid(fake_logits)
     fake_labels = torch.ones_like(fake_probabilities)
     return _square(fake_probabilities - fake_labels).mean()
 
 
 def l2_discriminator_criterion(real_logits, fake_logits, label_smoothing=False):
-    real_probabilities = F.sigmoid(real_logits)
-    fake_probabilities = F.sigmoid(fake_logits)
+    real_probabilities = torch.sigmoid(real_logits)
+    fake_probabilities = torch.sigmoid(fake_logits)
     real_labels = torch.ones_like(real_probabilities)
     if label_smoothing:
         real_labels *= 0.9
