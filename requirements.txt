@@ -2,5 +2,5 @@ tqdm==4.36.1
 ipdb==0.12.2
 numpy==1.17.2
 matplotlib==3.1.1
-Pillow==6.2.0
+Pillow==10.0.1
 jupyter==1.0.0
